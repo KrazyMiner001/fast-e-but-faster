@@ -22,7 +22,7 @@ fn main() {
 
     let e = calc_e(n.trim().parse().unwrap_or(1));
 
-    let e_decimal = Float::with_val((precision.trim().parse::<f32>().unwrap() * LOG2_10).ceil() as u32, e);
+    let e_decimal = Float::with_val(((precision.trim().parse::<f32>().unwrap()+3f32) * LOG2_10).ceil() as u32, e);
 
     let end_time = SystemTime::now();
 
