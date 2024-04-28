@@ -1,4 +1,5 @@
 use std::{fs, io, thread};
+use std::f32::consts::LOG2_10;
 use std::fs::File;
 use std::io::Write;
 use std::time::SystemTime;
@@ -21,7 +22,8 @@ fn main() {
     let start_time = SystemTime::now();
 
     let e = calc_e(n.trim().parse().unwrap_or(1));
-    let e_decimal = Float::with_val(precision.trim().parse().unwrap_or(1), e);
+
+    let e_decimal = Float::with_val((precision.trim().parse::<f32>().unwrap() * LOG2_10).ceil() as u32, e);
 
     let end_time = SystemTime::now();
 
