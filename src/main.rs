@@ -1,7 +1,6 @@
 use std::{fs, io, thread};
 use std::f32::consts::LOG2_10;
 use std::fs::File;
-use std::io::Write;
 use std::time::SystemTime;
 
 use rug::{Complete, Float, Integer, Rational};
