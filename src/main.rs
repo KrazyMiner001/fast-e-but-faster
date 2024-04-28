@@ -1,6 +1,7 @@
 use std::{fs, io, thread};
 use std::fs::File;
 use std::io::Write;
+use std::time::SystemTime;
 
 use rug::{Complete, Float, Integer, Rational};
 use rug::ops::DivRounding;
@@ -17,12 +18,18 @@ fn main() {
 
     File::create("e.txt").expect("Could not create e.txt");
 
+    let start_time = SystemTime::now();
+
     let e = calc_e(n.trim().parse().unwrap_or(1));
     let e_decimal = Float::with_val(precision.trim().parse().unwrap_or(1), e);
+
+    let end_time = SystemTime::now();
 
     fs::write("e.txt",
               e_decimal.to_string()
     ).expect("TODO: panic message");
+
+    println!("Calculated e with n = {} and a precision of {} in {} seconds", n, precision, end_time.duration_since(start_time).unwrap().as_secs_f64());
 }
 
 fn p(a: &Integer, b: &Integer) -> Integer {
