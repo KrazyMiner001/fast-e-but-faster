@@ -1,12 +1,9 @@
-mod division;
-
 use std::{fs, io, thread};
 use std::fs::File;
 use std::io::Write;
 
-use bigdecimal::{num_bigint::ToBigInt, BigDecimal};
-use division::impl_division;
-use num::{integer::div_floor, BigInt, BigUint, One, Zero};
+use rug::{Complete, Float, Integer, Rational};
+use rug::ops::DivRounding;
 
 fn main() {
     let n = &mut "".to_string();
@@ -19,41 +16,43 @@ fn main() {
         .read_line(precision).expect("Could not read precision");
 
     File::create("e.txt").expect("Could not create e.txt");
+
+    let e = calc_e(n.trim().parse().unwrap_or(1));
+    let e_decimal = Float::with_val(precision.trim().parse().unwrap_or(1), e);
+
     fs::write("e.txt",
-              calc_e(n.trim().parse().unwrap_or(1),
-                              precision.trim().parse().unwrap_or(1)).to_string())
-        .expect("Could not save to file");
+              e_decimal.to_string()
+    ).expect("TODO: panic message");
 }
 
-fn p(a: &BigUint, b: &BigUint) -> BigUint {
-    if b == &(a + 1u8) {
-        One::one()
+fn p(a: &Integer, b: &Integer) -> Integer {
+    if b.eq(&(a + 1u8).complete()) {
+        Integer::ONE.clone()
     } else {
-        let m = &div_floor(a + b, 2u8.into());
+        let m = &(a + b).complete().div_floor(2);
         p(a, m) * q(m, b) + p(m, b)
     }
 }
 
-fn q(a: &BigUint, b: &BigUint) -> BigUint {
-    if b == &(a + 1u8) {
+fn q(a: &Integer, b: &Integer) -> Integer {
+    if b.eq(&(a + 1u8).complete()) {
         b.clone()
     } else {
-        let m = &div_floor(a + b, 2u8.into());
+        let m = &(a + b).complete().div_floor(2);
         q(a, m) * q(m, b)
     }
 }
 
-fn calc_e(n: u32, precision: u64) -> BigDecimal {
-    let ((top_int, top_scale), (bottom_int, bottom_scale)) = thread::scope(|scope| {
-        let top_thread = scope.spawn(|| process_num(p(&Zero::zero(), &n.into())));
-        let bottom_thread = scope.spawn(|| process_num(q(&Zero::zero(), &n.into())));
+fn calc_e(n: u32) -> Rational {
+    let (top, bottom) = thread::scope(|scope| {
+        let top_thread = scope.spawn(|| p(&Integer::ZERO, &n.into()));
+        let bottom_thread = scope.spawn(|| q(&Integer::ZERO, &n.into()));
 
         (top_thread.join().unwrap(), bottom_thread.join().unwrap())
     });
 
-    1 + impl_division(top_int, &bottom_int, top_scale - bottom_scale, precision)
-}
+    let top: Rational = top.into();
+    let bottom: Rational = bottom.into();
 
-fn process_num(num: BigUint) -> (BigInt, i64) {
-    BigDecimal::from(num.to_bigint().unwrap()).as_bigint_and_exponent()
+    1 + (top / bottom)
 }
